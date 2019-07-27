@@ -41,6 +41,10 @@ setup(
     entry_points={
         'console_scripts': [
             'awsprocesscreds-saml = awsprocesscreds.cli:saml'
+         'saml_form_authenticators': [
+            'adfs = awsprocesscreds.saml.ADFSFormsBasedAuthenticator',
+            'okta = awsprocesscreds.saml.OktaAuthenticator'
+            ]
         ]
     },
     classifiers=(

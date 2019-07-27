@@ -8,6 +8,7 @@ from copy import deepcopy
 
 import six
 import requests
+import pkg_resources
 import botocore
 from botocore.client import Config
 from botocore.compat import urlsplit
@@ -306,12 +307,6 @@ class FormParser(six.moves.html_parser.HTMLParser):
 
 
 class SAMLCredentialFetcher(CachedCredentialFetcher):
-    SAML_FORM_AUTHENTICATORS = {
-        'okta': OktaAuthenticator,
-        'adfs': ADFSFormsBasedAuthenticator
-
-    }
-
     def __init__(self, client_creator, provider_name, saml_config,
                  role_selector=_role_selector,
                  password_prompter=getpass.getpass, cache=None,
@@ -321,7 +316,8 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
         self._role_selector = role_selector
         self._config = saml_config
         self._provider_name = provider_name
-        authenticator_cls = self.SAML_FORM_AUTHENTICATORS.get(provider_name)
+        authenticators = self.get_form_authenticators()
+        authenticator_cls = authenticators.get(provider_name)
         if authenticator_cls is None:
             raise ValueError('Unsupported SAML provider: %s' % provider_name)
         self._authenticator = authenticator_cls(password_prompter)
@@ -333,6 +329,14 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
         self._cache = cache
         self._stored_cache_key = None
         self._expiry_window_seconds = expiry_window_seconds
+
+    def get_form_authenticators(self):
+        authenticators = {}
+        for entry_point in pkg_resources.iter_entry_points(
+                'saml_form_authenticators'):
+            authenticators[
+                entry_point.name] = entry_point.load()
+        return authenticators
 
     @property
     def _cache_key(self):
