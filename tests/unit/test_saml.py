@@ -258,6 +258,73 @@ class TestSAMLGenericFormsBasedAuthenticator(object):
             }
         )
 
+    def test_input_missing_name_attribute(self, generic_auth,
+                                          generic_config,
+                                          mock_requests_session):
+        saml_form = (
+            '<html>'
+            '<form action="/path/login/">'
+            '<input debug="true"/>'
+            '<input name="spam" value="eggs"/>'
+            '<input name="username"/>'
+            '<input name="password"/>'
+            '</form>'
+            '</html>'
+        )
+        mock_requests_session.get.return_value = mock.Mock(
+            spec=requests.Response, status_code=200, text=saml_form
+        )
+        mock_requests_session.post.return_value = mock.Mock(
+            spec=requests.Response, status_code=200, text=(
+                '<form><input name="SAMLResponse" '
+                'value="fakeassertion"/></form>'
+            )
+        )
+        saml_assertion = generic_auth.retrieve_saml_assertion(generic_config)
+        assert saml_assertion == 'fakeassertion'
+
+        mock_requests_session.post.assert_called_with(
+            "https://example.com/path/login/", verify=True,
+            data={
+                'username': 'monty',
+                'password': 'mypassword',
+                'spam': 'eggs'
+            }
+        )
+
+    def test_boolean_presence_attribute(self, generic_auth,
+                                        generic_config,
+                                        mock_requests_session):
+        saml_form = (
+            '<html>'
+            '<form action="/path/login/">'
+            '<input boolean-attr name="spam" value="eggs"/>'
+            '<input name="username"/>'
+            '<input name="password"/>'
+            '</form>'
+            '</html>'
+        )
+        mock_requests_session.get.return_value = mock.Mock(
+            spec=requests.Response, status_code=200, text=saml_form
+        )
+        mock_requests_session.post.return_value = mock.Mock(
+            spec=requests.Response, status_code=200, text=(
+                '<form><input name="SAMLResponse" '
+                'value="fakeassertion"/></form>'
+            )
+        )
+        saml_assertion = generic_auth.retrieve_saml_assertion(generic_config)
+        assert saml_assertion == 'fakeassertion'
+
+        mock_requests_session.post.assert_called_with(
+            "https://example.com/path/login/", verify=True,
+            data={
+                'username': 'monty',
+                'password': 'mypassword',
+                'spam': 'eggs'
+            }
+        )
+
     def test_error_getting_form(self, generic_auth, mock_requests_session,
                                 generic_config):
         mock_requests_session.get.return_value = mock.Mock(
