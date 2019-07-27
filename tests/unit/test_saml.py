@@ -292,13 +292,13 @@ class TestSAMLGenericFormsBasedAuthenticator(object):
             }
         )
 
-    def test_boolean_presence_attribute(self, generic_auth,
+    def test_boolean_attribute_handling(self, generic_auth,
                                         generic_config,
                                         mock_requests_session):
         saml_form = (
             '<html>'
             '<form action="/path/login/">'
-            '<input boolean-attr name="spam" value="eggs"/>'
+            '<input attr-is-true name="spam" value="eggs"/>'
             '<input name="username"/>'
             '<input name="password"/>'
             '</form>'
