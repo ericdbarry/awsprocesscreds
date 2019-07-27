@@ -157,7 +157,8 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
         if not form_action.lower().startswith('https://'):
             raise SAMLError('Your SAML IdP must use HTTPS connection')
         payload = dict((tag.attrib['name'], tag.attrib.get('value', ''))
-                       for tag in login_form_html_node.findall(".//input"))
+                       for tag in login_form_html_node.findall(
+                           ".//input[@name]"))
         return form_action, payload
 
     def _assert_non_error_response(self, response):
@@ -287,7 +288,8 @@ class FormParser(six.moves.html_parser.HTMLParser):
         # so that the output will be suitable to be fed into an ET later.
         parts = []
         for k, v in d.items():
-            escaped_value = escape(v)  # pylint: disable=deprecated-method
+            escaped_value = escape(  # pylint: disable=deprecated-method
+                v) if v is not None else None
             parts.append('%s="%s"' % (k, escaped_value))
         return ' '.join(sorted(parts))
 
