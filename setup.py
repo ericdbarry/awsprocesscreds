@@ -40,12 +40,10 @@ setup(
     keywords='aws credentials',
     entry_points={
         'console_scripts': [
-            'awsprocesscreds-saml = awsprocesscreds.cli:saml'
+            'awsprocesscreds-saml = awsprocesscreds.cli:saml'],
          'saml_form_authenticators': [
             'adfs = awsprocesscreds.saml.ADFSFormsBasedAuthenticator',
-            'okta = awsprocesscreds.saml.OktaAuthenticator'
-            ]
-        ]
+            'okta = awsprocesscreds.saml.OktaAuthenticator']
     },
     classifiers=(
         'Development Status :: 2 - Pre-Alpha',
