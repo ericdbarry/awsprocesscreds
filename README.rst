@@ -41,8 +41,8 @@ arguments:
 
 * ``-e / --endpoint`` - Your SAML idp endpoint.
 * ``-u / --username`` - Your SAML username.
-* ``-p / --provider`` - The name of your SAML provider. Currently okta and
-  adfs are supported.
+* ``-p / --provider`` - The name of your SAML provider plug-in. Default
+ support includes 'okta' and 'adfs', both form-based auth.
 * ``-a / --role-arn``- The role arn you wish to assume. Your SAML provider
   must be configured to give you access to this arn.
 
@@ -71,6 +71,15 @@ Example adfs configuration::
     credential_process = awsprocesscreds-saml -e 'https://corp.example.com/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=urn:amazon:webservices' -u Monty -p adfs -a arn:aws:iam::123456789012:role/ADFS-Dev
 
 .. _AWS CLI Config docs: http://docs.aws.amazon.com/cli/latest/topic/config-vars.html#cli-aws-help-config-vars
+
+
+Plug-in Support
+---------------
+
+In cases where you have your own SAML requirements, there is a provided plug-in 
+architecture to supplement the the default okta and adfs implementations.
+
+See the PLUGINS documentation in the root of this project. 
 
 
 Custom Providers

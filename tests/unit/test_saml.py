@@ -7,6 +7,7 @@ import mock
 from dateutil.tz import tzlocal
 import pytest
 import requests
+import pkg_resources
 
 from awsprocesscreds.saml import ADFSFormsBasedAuthenticator
 from awsprocesscreds.saml import FormParser
@@ -21,6 +22,20 @@ from tests import create_assertion
 @pytest.fixture
 def mock_requests_session():
     return mock.Mock(spec=requests.Session)
+
+
+@pytest.fixture
+def mock_fake_pkg_resources(monkeypatch, mock_authenticator):
+    provider_name = 'myprovider'
+    authenticator_cls = mock.Mock(return_value=mock_authenticator)
+
+    def stub_iter(*args, **kwargs):
+        return [type('', (object,),
+                     {'name': provider_name,
+                     'load': lambda self: authenticator_cls})()]
+
+    monkeypatch.setattr(pkg_resources, "iter_entry_points",
+                        stub_iter)
 
 
 @pytest.fixture
@@ -89,16 +104,11 @@ def cache():
 
 @pytest.fixture
 def fetcher(generic_config, client_creator, prompter, mock_authenticator,
-            cache):
+            cache, mock_fake_pkg_resources):
+
     provider_name = 'myprovider'
-    authenticator_cls = mock.Mock(return_value=mock_authenticator)
 
-    class MockSAMLFetcher(SAMLCredentialFetcher):
-        SAML_FORM_AUTHENTICATORS = {
-            provider_name: authenticator_cls
-        }
-
-    saml_fetcher = MockSAMLFetcher(
+    saml_fetcher = SAMLCredentialFetcher(
         client_creator=client_creator,
         provider_name=provider_name,
         saml_config=generic_config,

@@ -3,13 +3,14 @@ import json
 import logging
 import xml.dom.minidom
 import base64
-
+import pkg_resources
 import requests
 import pytest
 
 from tests import create_assertion
 from awsprocesscreds.cli import saml, PrettyPrinterLogHandler
 from awsprocesscreds.saml import SAMLCredentialFetcher
+from awsprocesscreds.saml import OktaAuthenticator, ADFSFormsBasedAuthenticator
 
 
 @pytest.fixture
@@ -22,8 +23,27 @@ def argv():
     ]
 
 
+@pytest.fixture
+def mock_pkg_resources(monkeypatch):
+    class EntryPoint:
+        def __init__(self, name, load):
+            self.name = name
+            self._load = load
+
+        def load(self):
+            return self._load
+
+    def stub_iter(*args, **kwargs):
+        return [
+                EntryPoint('okta', OktaAuthenticator),
+                EntryPoint('adfs', ADFSFormsBasedAuthenticator),
+               ]
+
+    monkeypatch.setattr(pkg_resources, "iter_entry_points", stub_iter)
+
+
 def test_cli(mock_requests_session, argv, prompter, assertion, client_creator,
-             capsys, cache_dir):
+             capsys, cache_dir, mock_pkg_resources):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -54,7 +74,7 @@ def test_cli(mock_requests_session, argv, prompter, assertion, client_creator,
 
 
 def test_no_cache(mock_requests_session, argv, prompter, assertion,
-                  client_creator, capsys, cache_dir):
+                  client_creator, capsys, cache_dir, mock_pkg_resources):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -91,7 +111,7 @@ def test_no_cache(mock_requests_session, argv, prompter, assertion,
 
 
 def test_verbose(mock_requests_session, argv, prompter, assertion,
-                 client_creator, cache_dir):
+                 client_creator, cache_dir, mock_pkg_resources):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -122,7 +142,8 @@ def test_verbose(mock_requests_session, argv, prompter, assertion,
 
 
 def test_log_handler_parses_assertion(mock_requests_session, argv, prompter,
-                                      client_creator, cache_dir, caplog):
+                                      client_creator, cache_dir, caplog,
+                                      mock_pkg_resources):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -159,7 +180,8 @@ def test_log_handler_parses_assertion(mock_requests_session, argv, prompter,
 
 
 def test_log_handler_parses_dict(mock_requests_session, argv, prompter,
-                                 client_creator, cache_dir, caplog):
+                                 client_creator, cache_dir, caplog,
+                                 mock_pkg_resources):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -202,7 +224,8 @@ def test_log_handler_parses_dict(mock_requests_session, argv, prompter,
     assert expected_log in caplog.record_tuples
 
 
-def test_unsupported_saml_auth_type(client_creator, prompter):
+def test_unsupported_saml_auth_type(client_creator, prompter,
+                                    mock_pkg_resources):
     invalid_config = {
         'saml_authentication_type': 'unsupported',
         'saml_provider': 'okta',
@@ -235,8 +258,9 @@ def test_unsupported_saml_provider(client_creator, prompter):
         )
 
 
-def test_prompter_only_called_once(client_creator, prompter, assertion,
-                                   mock_requests_session):
+def test_prompter_only_called_once(client_creator, prompter,
+                                   assertion, mock_requests_session,
+                                   mock_pkg_resources):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -257,6 +281,7 @@ def test_prompter_only_called_once(client_creator, prompter, assertion,
         'saml_username': 'monty',
         'role_arn': 'arn:aws:iam::123456789012:role/monty'
     }
+
     fetcher = SAMLCredentialFetcher(
         client_creator=client_creator,
         saml_config=config,
