@@ -58,8 +58,6 @@ class SAMLAuthenticator(object):
 
 
 class GenericFormsBasedAuthenticator(SAMLAuthenticator):
-    USERNAME_FIELD = 'username'
-    PASSWORD_FIELD = 'password'
 
     _ERROR_BAD_RESPONSE = (
         'Received a non-200 response (%s) when making a request to: %s'
@@ -68,7 +66,8 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
         'Could not find login form from: %s'
     )
     _ERROR_MISSING_FORM_FIELD = (
-        'Error parsing HTML form, could not find the form field: "%s"'
+        'Error parsing HTML form, could not find the form field: "%s" '
+        'Available fields: %s.'
     )
     _ERROR_LOGIN_FAILED_NON_200 = (
         'Login failed, received non 200 response: %s'
@@ -121,6 +120,8 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
 
             * saml_endpoint
             * saml_username
+            * form_username_field
+            * form_password_field
 
         :raises SAMLError: Raised when we are unable to retrieve a
             SAML assertion.
@@ -143,7 +144,8 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
         return self._extract_saml_assertion_from_response(response)
 
     def _validate_config_values(self, config):
-        for required in ['saml_endpoint', 'saml_username']:
+        for required in ['saml_endpoint', 'saml_username',
+                         'form_username_field', 'form_password_field']:
             if required not in config:
                 raise SAMLError(self._ERROR_MISSING_CONFIG % required)
 
@@ -177,13 +179,16 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
 
     def _fill_in_form_values(self, config, form_data):
         username = config['saml_username']
-        if self.USERNAME_FIELD not in form_data:
-            raise SAMLError(
-                self._ERROR_MISSING_FORM_FIELD % self.USERNAME_FIELD)
+        username_field = config['form_username_field']
+        password_field = config['form_password_field']
+
+        if username_field not in form_data:
+            raise SAMLError(self._ERROR_MISSING_FORM_FIELD %
+                            (username_field, ", ".join(form_data.keys())))
         else:
-            form_data[self.USERNAME_FIELD] = username
-        if self.PASSWORD_FIELD in form_data:
-            form_data[self.PASSWORD_FIELD] = self._password_prompter(
+            form_data[username_field] = username
+        if password_field in form_data:
+            form_data[password_field] = self._password_prompter(
                 "Password: ")
 
     def _send_form_post(self, login_url, form_data):
@@ -257,8 +262,6 @@ class OktaAuthenticator(GenericFormsBasedAuthenticator):
 
 
 class ADFSFormsBasedAuthenticator(GenericFormsBasedAuthenticator):
-    USERNAME_FIELD = 'ctl00$ContentPlaceHolder1$UsernameTextBox'
-    PASSWORD_FIELD = 'ctl00$ContentPlaceHolder1$PasswordTextBox'
 
     def is_suitable(self, config):
         return (config.get('saml_authentication_type') == 'form' and

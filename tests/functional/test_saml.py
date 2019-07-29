@@ -279,7 +279,9 @@ def test_prompter_only_called_once(client_creator, prompter,
         'saml_provider': 'okta',
         'saml_endpoint': 'https://example.com/',
         'saml_username': 'monty',
-        'role_arn': 'arn:aws:iam::123456789012:role/monty'
+        'role_arn': 'arn:aws:iam::123456789012:role/monty',
+        'form_username_field': 'username',
+        'form_password_field': 'password',
     }
 
     fetcher = SAMLCredentialFetcher(
