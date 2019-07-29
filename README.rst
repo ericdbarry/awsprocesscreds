@@ -53,18 +53,6 @@ disable the cache by specifying ``--no-cache``.
 
 Additionally, you can show logs by specifying ``-v`` or ``--verbose``.
 
-Forms-based authentication can be customized: names of fields in form in ADFS
-tend to change. You can specify field names that are present in HTML form:
-
-* ``--form-username-field`` - name of field for username.
-* ``--form-password-field`` - name of field for password.
-
-For older Active Directory those fields are
-``ctl00$ContentPlaceHolder1$UsernameTextBox``
-and ``ctl00$ContentPlaceHolder1$PasswordTextBox``.
-In newer AD, you can change it to ``UserName`` and ``Password`` using above
-options.
-
 To configure this provider, you need create a profile using the
 ``credential_process`` config variable. See the `AWS CLI Config docs`_
 for more details on this config option.

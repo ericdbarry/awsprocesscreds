@@ -47,20 +47,6 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None,
         )
     )
     parser.add_argument(
-        '--form-username-field',
-        default="ctl00$ContentPlaceHolder1$UsernameTextBox", help=(
-            '(ADFS only) - name of the form field for user name supplied '
-            'by ADFS. Adjust according to your ADFS version.'
-        )
-    )
-    parser.add_argument(
-        '--form-password-field',
-        default="ctl00$ContentPlaceHolder1$PasswordTextBox", help=(
-            '(ADFS only) - name of the form field for password supplied '
-            'by ADFS. Adjust according to your ADFS version.'
-        )
-    )
-    parser.add_argument(
         '-v', '--verbose', action='store_true', help=('Enables verbose mode.')
     )
     args = parser.parse_args(argv)
@@ -88,9 +74,7 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None,
             'saml_endpoint': args.endpoint,
             'saml_authentication_type': 'form',
             'saml_username': args.username,
-            'role_arn': args.role_arn,
-            'form_username_field': args.form_username_field,
-            'form_password_field': args.form_password_field
+            'role_arn': args.role_arn
         },
         password_prompter=prompter,
         cache=cache
