@@ -155,7 +155,7 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
         login_form_html_node = self._parse_form_from_html(response.text)
         if login_form_html_node is None:
             raise SAMLError(self._ERROR_NO_FORM % endpoint)
-        form_action = urljoin(endpoint,
+        form_action = urljoin(response.url,
                               login_form_html_node.attrib.get('action', ''))
         if not form_action.lower().startswith('https://'):
             raise SAMLError('Your SAML IdP must use HTTPS connection')
