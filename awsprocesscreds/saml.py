@@ -66,8 +66,8 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
         'Could not find login form from: %s'
     )
     _ERROR_MISSING_FORM_FIELD = (
-        'Error parsing HTML form, could not find the form field: "%s" '
-        'Available fields: %s.'
+        'Error parsing HTML form, could not find the form field(s): "%s" '
+        'within available fields: %s.'
     )
     _ERROR_LOGIN_FAILED_NON_200 = (
         'Login failed, received non 200 response: %s'
@@ -182,13 +182,13 @@ class GenericFormsBasedAuthenticator(SAMLAuthenticator):
         username_field = config['form_username_field']
         password_field = config['form_password_field']
 
-        if username_field not in form_data:
+        if not all (k in form_data for k in (username_field, password_field)):
             raise SAMLError(self._ERROR_MISSING_FORM_FIELD %
-                            (username_field, ", ".join(form_data.keys())))
-        else:
-            form_data[username_field] = username
-        if password_field in form_data:
-            form_data[password_field] = self._password_prompter(
+                            (", ".join([username_field, password_field]), 
+                             ", ".join(form_data.keys())))
+        form_data[username_field] = username
+
+        form_data[password_field] = self._password_prompter(
                 "Password: ")
 
     def _send_form_post(self, login_url, form_data):
